@@ -9,11 +9,13 @@
 #include <memory>
 #include <vector>
 #include <cmath>
+#include <type_traits>
 
 namespace sort {
 
 	template<class RandomIt, class Compare>
 	void bubble(RandomIt first, RandomIt last, Compare comp) {
+
 		if (first != last) {
 			bool swapped = false;
 			for (auto it_i = first; it_i + 1 != last; ++it_i) {
@@ -31,17 +33,7 @@ namespace sort {
 
 	template<class RandomIt>
 	void bubble(RandomIt first, RandomIt last) {
-		bubble(first, last, std::less<std::iter_value_t<RandomIt>>());
-	}
-
-	template<class Collection, class Compare>
-	void bubble(Collection& coll, Compare comp) {
-		bubble(coll.begin(), coll.end(), comp);
-	}
-
-	template<class Collection>
-	void bubble(Collection& coll) {
-		bubble(coll.begin(), coll.end());
+		bubble(first, last, std::less<>());
 	}
 
 	template<class RandomIt, class Compare>
@@ -65,17 +57,7 @@ namespace sort {
 
 	template<class RandomIt>
 	void comb(RandomIt first, RandomIt last, const double factor = 1.247) {
-		comb(first, last, std::less<std::iter_value_t<RandomIt>>(), factor);
-	}
-
-	template<class Collection, class Compare>
-	void comb(Collection& coll, Compare comp, const double factor = 1.247) {
-		comb(coll.begin(), coll.end(), comp, factor);
-	}
-
-	template<class Collection>
-	void comb(Collection& coll, const double factor = 1.247) {
-		comb(coll.begin(), coll.end(), factor);
+		comb(first, last, std::less<>(), factor);
 	}
 
 	template<class RandomIt, class Compare>
@@ -86,38 +68,44 @@ namespace sort {
 
 	template<class RandomIt>
 	void insertion(RandomIt first, RandomIt last) {
-		insertion(first, last, std::less<std::iter_value_t<RandomIt>>());
+		insertion(first, last, std::less<>());
 	}
 
-	template<class Collection>
-	void insertion(Collection& coll) {
-		insertion(coll.begin(), coll.end());
+	template<class RandomIt, class Compare>
+	void shell(RandomIt first, RandomIt last, Compare comp) {
+		for (auto diff = (last - first) / 2; diff != 0; diff /= 2)
+			for (auto it_i = first + diff; it_i != last; ++it_i)
+				for (auto it_j = it_i; it_j - first >= diff && comp(*it_j, *(it_j - diff)); it_j -= diff)
+					std::iter_swap(it_j, it_j - diff);
 	}
 
-	template<class Collection, class Compare>
-	void insertion(Collection& coll, Compare comp) {
-		insertion(coll.begin(), coll.end(), comp);
+	template<class RandomIt>
+	void shell(RandomIt first, RandomIt last) {
+		shell(first, last, std::less<>());
 	}
 
 	template<class RandomIt, class Compare>
 	void selection(RandomIt first, RandomIt last, Compare comp) {
-		for (auto it = first; it != last; ++it)
-			std::iter_swap(it, std::min_element(it, last, comp));
+		if (std::is_integral<std::iter_value_t<RandomIt>>::value)
+			for (auto it = first; it != last; ++it)
+				std::iter_swap(it, std::min_element(it, last, comp));
+		else
+			for (auto it_i = first; it_i != last; ++it_i) {
+				auto min = *it_i;
+				auto min_it = it_i;
+				for (auto it_j = it_i + 1; it_j != last; ++it_j) {
+					if (comp(*it_j, min)) {
+						min = *it_j;
+						min_it = it_j;
+					}
+				}
+				std::iter_swap(it_i, min_it);
+		}
 	}
 
 	template<class RandomIt>
 	void selection(RandomIt first, RandomIt last) {
-		selection(first, last, std::less<std::iter_value_t<RandomIt>>());
-	}
-
-	template<class Collection, class Compare>
-	void selection(Collection& coll, Compare comp) {
-		selection(coll.begin(), coll.end(), comp);
-	}
-
-	template<class Collection>
-	void selection(Collection& coll) {
-		selection(coll.begin(), coll.end());
+		selection(first, last, std::less<>());
 	}
 
 	template<class RandomIt, class Compare>
@@ -128,47 +116,36 @@ namespace sort {
 
 	template<class RandomIt>
 	void heap(RandomIt first, RandomIt last) {
-		heap(first, last, std::less<std::iter_value_t<RandomIt>>());
+		heap(first, last, std::less<>());
 	}
 
-	template<class Collection, class Compare>
-	void heap(Collection& coll, Compare comp) {
-		heap(coll.begin(), coll.end(), comp);
-	}
+	namespace detail {
+		template<class RandomIt, class Compare>
+		void __stooge(RandomIt first, RandomIt last, Compare comp) {
+			if (first != last) {
+				if (comp(*last, *first))
+					std::iter_swap(first, last);
 
-	template<class Collection>
-	void heap(Collection& coll) {
-		heap(coll.begin(), coll.end());
+				if ((last - first) > 1) {
+					auto offset = (last - first + 1) / 3;
+					__stooge(first, last - offset, comp);
+					__stooge(first + offset, last, comp);
+					__stooge(first, last - offset, comp);
+				}
+			}
+		}
 	}
 
 	template<class RandomIt, class Compare>
 	void stooge(RandomIt first, RandomIt last, Compare comp) {
 		if (first != last) {
-			if (comp(*(last - 1), *first))
-				std::iter_swap(first, (last - 1));
-
-			if ((last - first) > 2) {
-				auto offset = (last - first) / 3;
-				stooge(first, last - 1 - offset);
-				stooge(first + offset, last - 1);
-				stooge(first, last - 1 - offset);
-			}
+			detail::__stooge(first, last - 1, comp);
 		}
 	}
 
 	template<class RandomIt>
 	void stooge(RandomIt first, RandomIt last) {
-		stooge(first, last, std::less<std::iter_value_t<RandomIt>>());
-	}
-
-	template<class Collection, class Compare>
-	void stooge(Collection& coll, Compare comp) {
-		stooge(coll.begin(), coll.end(), comp);
-	}
-
-	template<class Collection>
-	void stooge(Collection& coll) {
-		stooge(coll.begin(), coll.end());
+		stooge(first, last, std::less<>());
 	}
 
 	template<class RandomIt, class Compare>
@@ -190,17 +167,7 @@ namespace sort {
 
 	template<class RandomIt>
 	void gnome(RandomIt first, RandomIt last) {
-		gnome(first, last, std::less<std::iter_value_t<RandomIt>>());
-	}
-
-	template<class Collection, class Compare>
-	void gnome(Collection& coll, Compare comp) {
-		gnome(coll.begin(), coll.end(), comp);
-	}
-
-	template<class Collection>
-	void gnome(Collection& coll) {
-		gnome(coll.begin(), coll.end());
+		gnome(first, last, std::less<>());
 	}
 
 	namespace detail {
@@ -230,17 +197,7 @@ namespace sort {
 
 	template<class RandomIt>
 	void merge(RandomIt first, RandomIt last) {
-		merge(first, last, std::less<std::iter_value_t<RandomIt>>());
-	}
-
-	template<class Collection, class Compare>
-	void merge(Collection& coll, Compare comp) {
-		merge(coll.begin(), coll.end(), comp);
-	}
-
-	template<class Collection>
-	void merge(Collection& coll) {
-		merge(coll.begin(), coll.end());
+		merge(first, last, std::less<>());
 	}
 
 	namespace detail {
@@ -289,17 +246,7 @@ namespace sort {
 
 	template<class RandomIt>
 	void intro(RandomIt first, RandomIt last) {
-		intro(first, last, std::less<std::iter_value_t<RandomIt>>());
-	}
-
-	template<class Collection, class Compare>
-	void intro(Collection& coll, Compare comp) {
-		intro(coll.begin(), coll.end(), comp);
-	}
-
-	template<class Collection>
-	void intro(Collection& coll) {
-		intro(coll.begin(), coll.end());
+		intro(first, last, std::less<>());
 	}
 
 	template<class RandomIt, class Compare>
@@ -313,19 +260,8 @@ namespace sort {
 
 	template<class RandomIt>
 	void quick(RandomIt first, RandomIt last) {
-		quick(first, last, std::less<std::iter_value_t<RandomIt>>());
+		quick(first, last, std::less<>());
 	}
-
-	template<class Collection, class Compare>
-	void quick(Collection& coll, Compare comp) {
-		quick(coll.begin(), coll.end(), comp);
-	}
-
-	template<class Collection>
-	void quick(Collection& coll) {
-		quick(coll.begin(), coll.end());
-	}
-
 }
 
 #endif // !SORT_H

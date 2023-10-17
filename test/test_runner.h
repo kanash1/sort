@@ -7,6 +7,8 @@
 #include <string>
 #include <stdexcept>
 #include <iostream>
+#include <tuple>
+#include <utility>
 
 #include "collection_output.h"
 
@@ -38,9 +40,9 @@ public:
         return instance;
     }
 
-    template <class TestFunc>
-    static void RunTest(TestFunc func, const std::string& test_name) {
-        Get().RunTestImpl(func, test_name);
+    template <class TestFunc, class... TestArgs>
+    static void RunTest(TestFunc func, const std::string& test_name, TestArgs... args) {
+        Get().RunTestImpl(func, test_name, std::forward<TestArgs>(args)...);
     }
 
     ~TestRunner() {
@@ -53,10 +55,10 @@ public:
 private:
     TestRunner() {}
 
-    template <class TestFunc>
-    void RunTestImpl(TestFunc func, const std::string& test_name) {
+    template <class TestFunc, class... TestArgs>
+    void RunTestImpl(TestFunc func, const std::string& test_name, TestArgs... args) {
         try {
-            func();
+            std::apply(func, std::make_tuple(args...));
             std::cerr << test_name << " OK" << std::endl;
         }
         catch (std::exception& e) {
@@ -90,7 +92,7 @@ private:
   Assert(x, TEST_UNIQ_ID.str());        \
 }
 
-#define RUN_TEST(func) \
-  TestRunner::RunTest(func, #func)
+#define RUN_TEST(func, ...) \
+  TestRunner::RunTest(func, #func,  __VA_ARGS__)
 
 #endif // !TEST_RUNNER_H

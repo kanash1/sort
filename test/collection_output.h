@@ -7,6 +7,7 @@
 #include <sstream>
 #include <array>
 #include <vector>
+#include <list>
 #include <set>
 #include <utility>
 #include <map>
@@ -31,8 +32,8 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
 }
 
 template<class T>
-std::ostream& operator<<(std::ostream& os, const std::list<T>& v) {
-    return os << '[' << join(v, ',') << ']';
+std::ostream& operator<<(std::ostream& os, const std::list<T>& l) {
+    return os << '[' << join(l, ',') << ']';
 }
 
 template<class T, size_t size>
